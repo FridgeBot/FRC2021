@@ -1,0 +1,9 @@
+[
+  {
+    "artifact": "frcJava (in project AutoNavV1)",
+    "target": "roborio",
+    "debugfile": "frcJava_roborio.debugconfig",
+    "project": "AutoNavV1",
+    "language": "java"
+  }
+]
