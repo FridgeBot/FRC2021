@@ -5,6 +5,8 @@
 package frc.robot;
 
 
+import javax.lang.model.util.ElementScanner6;
+
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -90,6 +92,8 @@ public class Robot extends TimedRobot {
   double shootSpeed = 1;
   boolean on = true;
   int stop = 0;
+  int y = 0;
+  int h = 0;
 
   
   private Command m_autonomousCommand;
@@ -119,7 +123,20 @@ public class Robot extends TimedRobot {
     mecanum.setSafetyEnabled(false);
 
   }
-
+  public void navX() {
+    SmartDashboard.putNumber("gyro X", navX.getRawGyroX());
+    SmartDashboard.putNumber("gyro Y", navX.getRawGyroY());
+    SmartDashboard.putNumber("gyro Z", navX.getRawGyroZ());
+    SmartDashboard.putNumber("accel X", navX.getRawAccelX());
+    SmartDashboard.putNumber("accel Y", navX.getRawAccelY());
+    SmartDashboard.putNumber("accel Z", navX.getRawAccelZ());
+    SmartDashboard.putNumber("velocity X", navX.getVelocityX());
+    SmartDashboard.putNumber("velocity Y", navX.getVelocityY());
+    SmartDashboard.putNumber("velocity Z", navX.getVelocityZ());
+    SmartDashboard.putNumber("DisplacementX", navX.getDisplacementX());
+    SmartDashboard.putNumber("DisplacementY", navX.getDisplacementY());
+    SmartDashboard.putNumber("DisplacementZ", navX.getDisplacementZ());
+  }
   /**
    * This function is called every robot packet, no matter the mode. Use this for items like
    * diagnostics that you want ran during disabled, autonomous, teleoperated and test.
@@ -134,7 +151,7 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-
+    navX();
     if(joy.getRawButton(T6)){
       navX.reset();
       navX.resetDisplacement();
@@ -172,20 +189,27 @@ public class Robot extends TimedRobot {
     switch(m_autoSelected){
       case Calibration:
         double DisCal [] = {48, 28, 48};
-        double AngCal [] = {0, 90, -90};
-        for (int y = 0; y < 3; y++){//for loop not work
-          if(navX.getYaw() > AngCal[y]+0.2){
+        double AngCal [] = {15, 90, -90};
+        if (y < 3){
+          if(navX.getYaw() > AngCal[y]+0.2 && h == 0){
             mecanum.driveCartesian( 0, 0, -0.3);
-          }else if(navX.getYaw() < AngCal[y]-0.2){
+          }else if(navX.getYaw() < AngCal[y]-0.2 && h == 0){
             mecanum.driveCartesian( 0, 0, 0.3);
+          }else if(h == 0){
+            h ++;
           }
-          else if(navX.getDisplacementY() > DisCal[y]){
-            mecanum.driveCartesian( 0, -0.3, 0);
+          if(navX.getDisplacementY() < DisCal[y]/100 && h == 1){
+            mecanum.driveCartesian( 0, 0.3, 0);
+          }else if(h ==1){
+            h ++;
           }
-          else{
+          if (h == 2){
+            y ++;
             navX.reset();
+            h = 0;
           } 
           System.out.println(navX.getYaw()+", "+AngCal[y]);
+          //SmartDashboard.putNumber("Displacement", navX.getDisplacementY());
         }
 
         break; 
