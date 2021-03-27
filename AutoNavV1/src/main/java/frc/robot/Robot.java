@@ -5,8 +5,6 @@
 package frc.robot;
 
 
-import javax.lang.model.util.ElementScanner6;
-
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -31,7 +29,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
  */
 public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-
+  
   private static final String Calibration = "Calibration";
   private static final String AutoNavPath = "AutoNavPath";
   private static final String AutoNavPath2 = "AutoNavPath2";
@@ -44,6 +42,7 @@ public class Robot extends TimedRobot {
   
   MecanumDrive mecanum = new MecanumDrive(Left, left, Right, right);
   Joystick joy = new Joystick(0);
+  Timer clock = new Timer();
 
   Solenoid intakeSolenoidIn = new Solenoid(4);
   Solenoid intakeSolenoidOut = new Solenoid(5);
@@ -94,8 +93,12 @@ public class Robot extends TimedRobot {
   int stop = 0;
   int y = 0;
   int h = 0;
-
-  
+  int pos = 0;
+  int x = 0;
+  int z = 0;
+  int pos2 = 0;
+  int g = 0;
+  int pos3 = 0;  
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
@@ -158,7 +161,6 @@ public class Robot extends TimedRobot {
       navX.reset();
       navX.resetDisplacement();
     }
-    // SmartDashboard.putNumber("DisplaceX", navX.getDisplacementX());
     // SmartDashboard.putNumber("DisplaceY", navX.getDisplacementY());
     // SmartDashboard.putNumber("RotZ", navX.getYaw());
 
@@ -181,16 +183,18 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
+    clock.start();
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    Timer.delay(0.02);
+    // Timer.delay(0.02);
     m_autoSelected = m_chooser.getSelected();
     switch(m_autoSelected){
       case Calibration:
-        double DisCal [] = {48, 28, 48};
+        //double DisCal [] = {48, 28, 48};
+        double TimCal [] = {1.13, 0.66, 1.13};
         double AngCal [] = {15, 90, -90};
         if (y < 3){
           if(navX.getYaw() > AngCal[y]+0.2 && h == 0){
@@ -199,10 +203,14 @@ public class Robot extends TimedRobot {
             mecanum.driveCartesian( 0, 0, 0.3);
           }else if(h == 0){
             h ++;
+            clock.reset();
           }
-          if(navX.getDisplacementY() < DisCal[y]/100 && h == 1){
-            mecanum.driveCartesian( 0, 0.3, 0);
-          }else if(h ==1){
+          if (clock.get() < TimCal[y] && h == 1){
+            mecanum.driveCartesian(0, 0.3, 0);
+          }
+          //if(navX.getDisplacementY() < DisCal[y]/100 && h == 1){
+            //mecanum.driveCartesian( 0, 0.3, 0);
+          else if(h ==1 ){
             h ++;
           }
           if (h == 2){
@@ -210,72 +218,105 @@ public class Robot extends TimedRobot {
             navX.reset();
             h = 0;
           } 
-          System.out.println(navX.getYaw()+", "+AngCal[y]);
+          System.out.println(clock.get());
           //SmartDashboard.putNumber("Displacement", navX.getDisplacementY());
+        }else{
+          mecanum.driveCartesian(0,0,0);
+          clock.stop(); 
         }
 
         break; 
       case AutoNavPath:
-        double Dis [] = {63, 36.9, 32.4, 37.8, 32.4, 37.8, 63, 45, 37.8, 32.4, 28.8, 125.1, 40.5, 28.8, 117, 28.8, 138};
+        //double Dis [] = {63, 36.9, 32.4, 37.8, 32.4, 37.8, 63, 45, 37.8, 32.4, 28.8, 125.1, 40.5, 28.8, 117, 28.8, 138};
+        double Tim [] = {1.49, 0.87, 0.77, 0.89, 0.77, 0.89, 1.49, 1.06, 0.89, 0.77, 0.68, 2,96, 0.96, 2.76, 0.68, 3.26};
         double Ang [] = {-5.9, 16, 36.7, 98.7, 81.3, 98.7, 28.1, -18.6, -101.3, -94.8, -61, -47.8, -77.1, -82, -51, 22.5, -22.5};
-        int pos = 0;
-        for (int x = 0; x < 17; x ++){
+        
+        if (x > 17){
           if(navX.getYaw() > Ang[x] && pos == 0){
             mecanum.driveCartesian( 0, 0, (-1.0));
           }
           else if (navX.getYaw() < Ang[x] && pos == 0){
             mecanum.driveCartesian( 0, 0, (1.0));
+          }else{
+            pos ++;
           }
-          else{
-            pos = 1;
-          }
-          if(navX.getDisplacementY() > Dis[x]/100 && pos == 1){
-            mecanum.driveCartesian( 0, -0.3, 0);
+          if(clock.get() < Tim[y] && pos == 1){
+            mecanum.driveCartesian( 0, 0.3, 0);
           }else if (pos == 1){
-            pos = 0;
+            pos ++;
+          }
+          if(pos == 3){
+            y ++;
             navX.reset();
-            navX.resetDisplacement();
+            pos = 0;
           }
           System.out.println("Pos: "+pos+", RotZ: "+navX.getYaw()+", DisplaceY: "+navX.getDisplacementY());
+        }else{
+          mecanum.driveCartesian(0, 0, 0);
+          clock.stop();
         }
         break;
       case AutoNavPath2:
-        double Dis2 [] = {22.4, 56.6, 44.7, 70, 36.1, 44.7, 22.4, 20, 36.1, 36.1, 20, 22.4, 44.7, 22.4, 80, 44.7, 56.6, 22.4};
+        //double Dis2 [] = {22.4, 56.6, 44.7, 70, 36.1, 44.7, 22.4, 20, 36.1, 36.1, 20, 22.4, 44.7, 22.4, 80, 44.7, 56.6, 22.4};
+        double Tim2 [] = {0.53, 1,34, 1.06, 1.65, 0.85, 1.06, 0.53, 0.47, 0.85, 0.85, 0.47, 0.53, 1.06, 0.53, 1.89, 1.06, 1.34, 0.53};
         double Ang2 [] = {-26.6, -18.4, 18.4, 18.4, 33.7, 29.7, -39.4, -26.6, -56.3, -67.4, -60.3, -26.6, -31.7, 26.6, 26.6, 14, 22.5, -22.5};
-        int dir2 = 1;
-        for (int x = 0; x < 18; x++){
-          if (Ang2[x] < 0){dir2 = -1;}else{dir2 = 1;}
-
-          if(Math.abs(navX.getYaw()) < Math.abs(Ang2[x])){
-            mecanum.driveCartesian( 0, 0, (-1.0*dir2));
-          }else if(navX.getDisplacementY() < Dis2[x]/100){
-            mecanum.driveCartesian( 0, 0.3, 0);
+        if (z < 17){
+          if(navX.getYaw() > Ang2[z]+0.2 && pos2 == 0){
+            mecanum.driveCartesian( 0, 0, -0.3);
+          }else if(navX.getYaw() < Ang2[z]-0.2 && pos2 == 0){
+            mecanum.driveCartesian( 0, 0, 0.3);
           }else{
-            mecanum.driveCartesian( 0, 0, 0);
-            navX.reset();
-            navX.resetDisplacement();
+            pos2 ++;
           }
+          if(clock.get() < Tim2[z] && pos2 ==1){
+            mecanum.driveCartesian( 0, 0.3, 0);
+          }else if(pos2 == 1){
+            pos2 ++;
+          }if(pos2 == 2){
+            z ++;
+            navX.reset();
+            pos2 =0;
+          }
+        }else{
+          mecanum.driveCartesian(0,0,0);
+          clock.stop();
         }
         break;
       case AutoNavPath3:
       double Dis3[] = {28.3, 41.2, 76.2, 50, 28.3, 90.6, 90.6, 28.3, 30, 28.3, 90.6, 41.2, 2.24};
       double Ang3[] = {-45, -30.9, 99.2, -3.1, -90, -41.9, 167.4, -38.7, -50.2, -45, -41.9, 159.7, -30};
-      int dir3 = 1;
-      for (int x = 0; x < 13; x++){
-        if (Ang3[x] < 0){dir3 = -1;}else{dir3 = 1;}
-
-        if(Math.abs(navX.getYaw()) < Math.abs(Ang3[x])){
-          mecanum.driveCartesian( 0, 0, (-1.0*dir3));
-        }else if(navX.getDisplacementY() < Dis3[x]/100){
-          mecanum.driveCartesian( 0, 0.3, 0);
+      double Pick [] = {0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0};
+        if (g < 13){
+          if(navX.getYaw() > Ang3[g]+0.2 && pos3 == 0){
+            mecanum.driveCartesian( 0, 0, -0.3);
+          }else if(navX.getYaw() < Ang3[g]-0.2 && pos3 == 0){
+            mecanum.driveCartesian( 0, 0, 0.3);
+          }else{
+            pos3 ++;
+          }
+          if (clock.get() < Dis3[g]/42.33 && pos3 == 1){
+            mecanum.driveCartesian( 0, 0.3, 0);
+          }else if(pos3 == 1){
+            pos ++;
+          }if (pos3 == 2){
+            intakewheels.set(Pick[g]);
+          }else{
+            pos3 ++;
+          }
+          if (pos3 == 3){
+            g ++;
+            navX.reset();
+            pos3 = 0;
+          }
+          
         }else{
-          mecanum.driveCartesian( 0, 0, 0);
-          navX.reset();
-          navX.resetDisplacement();
+          mecanum.driveCartesian(0, 0, 0);
+          clock.stop();
         }
-      }
+        break;
     }
   }
+  
 
   @Override
   public void teleopInit() {
