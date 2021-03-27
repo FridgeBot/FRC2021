@@ -133,6 +133,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("velocity X", navX.getVelocityX());
     SmartDashboard.putNumber("velocity Y", navX.getVelocityY());
     SmartDashboard.putNumber("velocity Z", navX.getVelocityZ());
+
+    //not showing accurate numbers
     SmartDashboard.putNumber("DisplacementX", navX.getDisplacementX());
     SmartDashboard.putNumber("DisplacementY", navX.getDisplacementY());
     SmartDashboard.putNumber("DisplacementZ", navX.getDisplacementZ());
