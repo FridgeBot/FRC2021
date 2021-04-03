@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -16,6 +15,7 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.AnalogInput;
+//import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.I2C;
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
@@ -31,6 +31,7 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
   private static final String Calibration = "Calibration";
+  private static final String Voltage = "Voltage";
   private static final String AutoNavPath = "AutoNavPath";
   private static final String AutoNavPath2 = "AutoNavPath2";
   private static final String AutoNavPath3 = "AutoNavPath3";
@@ -115,6 +116,7 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putData("Auto choices", m_chooser);
     m_chooser.addOption("Calibration", Calibration);
+    m_chooser.addOption("Voltage", Voltage);
     m_chooser.addOption("AutoNavPath", AutoNavPath);
     m_chooser.addOption("AutoNavPath2", AutoNavPath2);
     m_chooser.addOption("AutoNavPath3", AutoNavPath3);
@@ -179,6 +181,9 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     navX.reset();
+    y = 0;
+    x = 0;
+    g = 0;
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
@@ -192,6 +197,31 @@ public class Robot extends TimedRobot {
     // Timer.delay(0.02);
     m_autoSelected = m_chooser.getSelected();
     switch(m_autoSelected){
+      /*case Voltage:
+        //double DisCal [] = {48, 28, 48};
+        double TimVolt[] = {1.13, 0.66, 1.13};
+        double AngVolt[] = {15, 90, -90};
+        if (y < 3){
+        if(navX.getYaw() > AngVolt[y]+0.2 && h == 0){
+         mecanum.driveCartesian( 0, 0, -0.3);
+        }else if(navX.getYaw() < AngVolt[y]-0.2 && h == 0){
+         mecanum.driveCartesian( 0, 0, 0.3);
+        }else if(h == 0){
+          h ++;
+          clock.reset();
+         }
+       if (clock.get() < TimVolt[y] && h == 1 && DriverStation.getInstance().getBatteryVoltage() shows an error ){
+          mecanum.driveCartesian(0, 0.3, 0);
+        }
+        else if(h ==1 ){
+         h ++;
+         }
+        if (h == 2){
+         y ++;
+         navX.reset();
+          h = 0;
+        } 
+      break;*/
       case Calibration:
         //double DisCal [] = {48, 28, 48};
         double TimCal [] = {1.13, 0.66, 1.13};
@@ -227,30 +257,31 @@ public class Robot extends TimedRobot {
 
         break; 
       case AutoNavPath:
-        //double Dis [] = {63, 36.9, 32.4, 37.8, 32.4, 37.8, 63, 45, 37.8, 32.4, 28.8, 125.1, 40.5, 28.8, 117, 28.8, 138};
-        double Tim [] = {1.49, 0.87, 0.77, 0.89, 0.77, 0.89, 1.49, 1.06, 0.89, 0.77, 0.68, 2,96, 0.96, 2.76, 0.68, 3.26};
-        double Ang [] = {-5.9, 16, 36.7, 98.7, 81.3, 98.7, 28.1, -18.6, -101.3, -94.8, -61, -47.8, -77.1, -82, -51, 22.5, -22.5};
+        //double Dis [] = {63, 46.9, 32.4, 37.8, 32.4, 37.8, 156, 45, 37.8, 32.4, 23, 160, 40.5, 28.8, 320};
+        double Tim [] = {0.9, 0.66, 0.46, 0.54, 0.46, 0.54, 1.8, 0.64, 0.54, 0.46, 0.33, 0.86, 0.43, 0.41, 4.54};//Dis/70.55
+       // double Tim [] = {1.49, 0.87, 0.77, 0.89, 0.77, 0.89, 1.49, 1.06, 0.89, 0.77, 0.68, 2,96, 0.96, 2.76, 0.68, 3.26}; for 0.3 speed (Dis / 42.33)
+        double Ang [] = {-5.9, 16, 36.7, 85, 75, 98.7, 48, -15, -101.3, -94.8, -78, -15, -79.8, -82, -57};
         
-        if (x > 17){
-          if(navX.getYaw() > Ang[x] && pos == 0){
-            mecanum.driveCartesian( 0, 0, (-1.0));
-          }
-          else if (navX.getYaw() < Ang[x] && pos == 0){
-            mecanum.driveCartesian( 0, 0, (1.0));
-          }else{
+        if (x < 15){
+          if(navX.getYaw() > Ang[x]+0.2 && pos == 0){
+            mecanum.driveCartesian( 0, 0, -0.3);
+          }else if(navX.getYaw() < Ang[x]-0.2 && pos == 0){
+            mecanum.driveCartesian( 0, 0, 0.3);
+          }else if(pos == 0){
             pos ++;
+            clock.reset();
           }
-          if(clock.get() < Tim[y] && pos == 1){
-            mecanum.driveCartesian( 0, 0.3, 0);
+          if(clock.get() < Tim[x] && pos == 1){
+            mecanum.driveCartesian( 0, 0.5, 0);
           }else if (pos == 1){
             pos ++;
           }
-          if(pos == 3){
-            y ++;
+          if(pos == 2){
+            x ++;
             navX.reset();
             pos = 0;
           }
-          System.out.println("Pos: "+pos+", RotZ: "+navX.getYaw()+", DisplaceY: "+navX.getDisplacementY());
+          System.out.println("Pos: "+pos+ ", time: " +clock.get()+ "x: " +x);
         }else{
           mecanum.driveCartesian(0, 0, 0);
           clock.stop();
@@ -265,8 +296,9 @@ public class Robot extends TimedRobot {
             mecanum.driveCartesian( 0, 0, -0.3);
           }else if(navX.getYaw() < Ang2[z]-0.2 && pos2 == 0){
             mecanum.driveCartesian( 0, 0, 0.3);
-          }else{
+          }else if(pos2 == 0){
             pos2 ++;
+            clock.reset();
           }
           if(clock.get() < Tim2[z] && pos2 ==1){
             mecanum.driveCartesian( 0, 0.3, 0);
@@ -291,8 +323,9 @@ public class Robot extends TimedRobot {
             mecanum.driveCartesian( 0, 0, -0.3);
           }else if(navX.getYaw() < Ang3[g]-0.2 && pos3 == 0){
             mecanum.driveCartesian( 0, 0, 0.3);
-          }else{
+          }else if(pos3 == 0){
             pos3 ++;
+            clock.reset();
           }
           if (clock.get() < Dis3[g]/42.33 && pos3 == 1){
             mecanum.driveCartesian( 0, 0.3, 0);
